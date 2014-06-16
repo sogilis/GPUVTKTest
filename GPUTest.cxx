@@ -1,40 +1,36 @@
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    TestGPURayCastCompositeToMIP.cxx
-
-  Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
-// This test covers composite to MIP to methods switching.
-// This test volume renders a synthetic dataset with unsigned char values,
-// first with the composite method, then with the MIP method.
-
-#include "vtkGPUVolumeRayCastMapper.h"
 #include "vtkSmartVolumeMapper.h"
 #include "vtkRenderer.h"
 #include "vtkRenderWindow.h"
 #include "vtkRenderWindowInteractor.h"
 #include "vtkCamera.h"
-#include "vtkSphereSource.h"
-#include <vtkDICOMImageReader.h>
 #include <vtkSmartPointer.h>
+#include <vtkImageData.h>
+
+void createImageData(vtkImageData* imageData, int width, int height, double scalarToFill)
+{
+    // Specify the size of the image data
+    imageData->SetDimensions(width, height, 1);
+    imageData->SetNumberOfScalarComponents(1);
+    imageData->SetScalarTypeToDouble();
+    imageData->AllocateScalars();
+
+    int *dims = imageData->GetDimensions();
+    for (int z = 0; z < dims[2]; z++) {
+        for (int y = 0; y < dims[1]; y++) {
+            for (int x = 0; x < dims[0]; x++) {
+                double* pixel = static_cast<double*>(imageData->GetScalarPointer(x,y,z));
+                pixel[0] = scalarToFill;
+            }
+        }
+    }
+    imageData->Modified();
+}
 
 int main(int argc, char *argv[])
 {
+  vtkSmartPointer<vtkImageData> imageData = vtkSmartPointer<vtkImageData>::New();
+  createImageData(imageData, 100, 100, 1000);
 
-  std::string folder = argv[1];
-
-  vtkSmartPointer<vtkDICOMImageReader> reader = vtkSmartPointer<vtkDICOMImageReader>::New();
-   reader->SetDirectoryName(folder.c_str());
-   reader->Update();
-  
   vtkRenderWindow *renWin=vtkRenderWindow::New();
   vtkRenderer *ren1=vtkRenderer::New();
   ren1->SetBackground(0.1,0.4,0.2);
@@ -49,7 +45,8 @@ int main(int argc, char *argv[])
   vtkVolume *volume;
   volumeMapper = vtkSmartVolumeMapper::New();
   volumeMapper->SetBlendModeToComposite(); // composite first
-  volumeMapper->SetInputConnection(reader->GetOutputPort());
+  volumeMapper->SetInput(imageData);
+  volumeMapper->Update();
 
   volume=vtkVolume::New();
   volume->SetMapper(volumeMapper);
