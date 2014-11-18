@@ -68,5 +68,8 @@ int main(int argc, char *argv[])
     cout << "GPU extensions not supported." << endl;
   } else {
     cout << "GPU extensions is supported." << endl;
+    cout << "GPU extensions is supported." << endl;
+    cout << "GPU extensions is supported." << endl;
+    cout << "GPU extensions is supported." << endl;
   }
 }
